@@ -1,20 +1,7 @@
 package com.example.konradbujak.closestbeaconapp;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.nfc.NdefMessage;
-import android.nfc.NdefRecord;
-import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.nfc.tech.MifareClassic;
-import android.nfc.tech.MifareUltralight;
-import android.os.CountDownTimer;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -26,47 +13,30 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.kontakt.sdk.android.ble.configuration.ActivityCheckConfiguration;
 import com.kontakt.sdk.android.ble.configuration.ScanMode;
 import com.kontakt.sdk.android.ble.configuration.ScanPeriod;
 import com.kontakt.sdk.android.ble.connection.OnServiceReadyListener;
 import com.kontakt.sdk.android.ble.filter.ibeacon.IBeaconFilter;
-import com.kontakt.sdk.android.ble.filter.ibeacon.IBeaconFilters;
 import com.kontakt.sdk.android.ble.manager.ProximityManager;
 import com.kontakt.sdk.android.ble.manager.ProximityManagerFactory;
 import com.kontakt.sdk.android.ble.manager.listeners.ScanStatusListener;
 import com.kontakt.sdk.android.ble.manager.listeners.simple.SimpleIBeaconListener;
 import com.kontakt.sdk.android.ble.manager.listeners.simple.SimpleScanStatusListener;
-import com.kontakt.sdk.android.ble.manager.listeners.simple.SimpleSecureProfileListener;
 import com.kontakt.sdk.android.ble.rssi.RssiCalculators;
-import com.kontakt.sdk.android.ble.spec.EddystoneFrameType;
 import com.kontakt.sdk.android.common.KontaktSDK;
 import com.kontakt.sdk.android.common.profile.IBeaconDevice;
 import com.kontakt.sdk.android.common.profile.IBeaconRegion;
-import com.kontakt.sdk.android.common.profile.ISecureProfile;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
     private ProximityManager KontaktManager;
-    final CountDownTimer counter1 = new CountDownTimer(5000, 1) {
-        @Override
-        public void onTick(long millisUntilFinished) {
 
-        }
 
-        @Override
-        public void onFinish() {
-            stopScan();
-        }
-    };
     String TAG = "MyActivity";
     MySimpleArrayAdapter adapter;
     //Replace (Your Secret API key) with your API key aquierd from the Kontakt.io Web Panel
@@ -141,9 +111,10 @@ public class MainActivity extends AppCompatActivity {
     private void configureProximityManager() {
         KontaktManager = ProximityManagerFactory.create(this);
         KontaktManager.configuration()
+                // Updates will be triggered once per second or rarely
                 .deviceUpdateCallbackInterval(TimeUnit.SECONDS.toMillis(1))
+                // This RSSI calculator will gives you mean value of RSSI upt to last 5 or less values
                 .rssiCalculator(RssiCalculators.newLimitedMeanRssiCalculator(5))
-                .resolveShuffledInterval(3)
                 .scanMode(ScanMode.BALANCED)
                 .scanPeriod(ScanPeriod.RANGING);
     }
@@ -222,12 +193,15 @@ public class MainActivity extends AppCompatActivity {
                     adapter.updateList(distances, uids);
                 }
             }
+            @Override
+            public void onIBeaconsUpdated(List<IBeaconDevice> ibeacons, IBeaconRegion region) {
+                for (IBeaconDevice ibeacon : ibeacons) {
+                    //TODO
+                }
+            }
         };
     }
-    private void stopScan(){
-            KontaktManager.stopScanning();
-            super.onStop();
-        }
+
     private void startScan() {
         KontaktManager.connect(new OnServiceReadyListener()
         {
